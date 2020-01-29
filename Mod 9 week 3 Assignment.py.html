@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# **Import pandas library**
+
+# In[2]:
+
+
+import pandas as pd
+
+
+# **Scrape from wikipedia using pandas read_html function**
+
+# In[3]:
+
+
+file = pd.read_html('https://en.wikipedia.org/wiki/List_of_postal_codes_of_Canada:_M')
+df = file[0]
+type(df)
+df.head()
+
+
+# **Drop values from 'Borough' column with vales that are 'Not assigned'**
+
+# In[4]:
+
+
+#go through this expression again to understand the syntax
+dropped_df = df.drop(df[df['Borough'] == 'Not assigned'].index)
+dropped_df.head()
+
+
+# **Find out the number of rows to iterate through a loop to assign 'Not assigned' values from 'Neighbourhood' column.**
+
+# In[5]:
+
+
+num_rows = dropped_df.count(axis = 0)
+num_rows
+
+
+# **Loop through all rows to change 'Not assigned' values from 'Neighbourhood' column**
+
+# In[6]:
+
+
+for i in range(1,210):
+    if dropped_df.iloc[i][2] == 'Not assigned':
+        dropped_df.iloc[i][2] = dropped_df.iloc[i][1]
+dropped_df.head()
+
+                                             
+
+
+# **Combine Neighbourhoods that are in the same Borough using groupby function and apply method.**
+# **Rename the 'Postcode' column name to 'Postal Code'**
+
+# In[6]:
+
+
+#Go through syntax again to understand
+dropped_df = dropped_df.groupby(['Postcode','Borough'])['Neighbourhood'].apply(list)
+dropped_df = dropped_df.sample(frac=1).reset_index()
+dropped_df['Neighbourhood'] = dropped_df['Neighbourhood'].str.join(',') 
+dropped_df.rename(columns = {'Postcode': 'Postal Code'}, inplace = True)
+dropped_df.head()
+
+
+# **Check the shape of the table**
+
+# In[7]:
+
+
+dropped_df.shape
+
+
+# **Check first line of my answer vs screenshot given**
+
+# In[9]:
+
+
+dropped_df[dropped_df['Postal Code'] == 'M5G']
+
+
+# **Store geospatial data's url in variable**
+
+# In[10]:
+
+
+geo_url =  'http://cocl.us/Geospatial_data'
+
+
+# **Scrape data from website using pandas' read_csv function**
+
+# In[12]:
+
+
+lat_lng = pd.read_csv(geo_url)
+lat_lng.head()
+
+
+# **Combine table obtained in previous line with table scraped from wikipedia (dropped_df) using link as 'Postal Code' column**
+
+# In[13]:
+
+
+big_df = pd.merge(dropped_df, lat_lng, on = 'Postal Code')
+
+
+# **Check against screenshot provided**
+
+# In[20]:
+
+
+big_df[big_df['Postal Code'] == 'M4B']
+
+
+# **Done!**
